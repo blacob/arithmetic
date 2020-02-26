@@ -3,28 +3,20 @@ digits = '0123456789.'
 operators = '+-*'
 parens = '()'
 
-def parse(explst, left = None, operator = None, right = None):
-    print(explst, left, operator, right)
-    if not explst:
-        return eval(left, operator, right)
-
-    if (left and right) or (explst[0] == ')'):
-        return eval(left, operator, right)
+def parse(explst):
 
     first = explst[0]
     rest = explst[1:]
     if first == '(':
-        return parse(rest)
-    elif first[0] in digits:
-        if left:
-            if operator:
-                return parse(rest, left, operator, first)
-            else:
-                print("ERROR")
-                exit()
-        return parse(explst[1:], first)
-    elif first in operators:
-        return parse(explst[1:], left, first)
+        left, newlist = parse(explst[1:])
+        #print(left, newlist)
+        operator = newlist[0]
+        right, toss = parse(newlist[1:])
+        #print(right, toss)
+        return eval(left, operator, right), toss[1:]
+    elif first[0] in digits or first in operators:
+        return first, explst[1:]
+
 
 
 def eval(l, operator, r):
@@ -39,9 +31,8 @@ def eval(l, operator, r):
     elif operator == '*':
         return left * right
     else:
-        print("ERROR")
+        print("ERROR, invalid op: " + operator)
         exit()
-
 
 """ Receives a parenthesized arithmetic expression and returns it's value. """
 def driver(line):
@@ -57,7 +48,7 @@ def driver(line):
                 holder[-1] = holder[-1] + c
         else:
             return "Invalid Input: " + line
-    return parse(holder)
+    return parse(holder)[0]
 
 def main():
      for i in range(1, len(sys.argv)):
@@ -66,6 +57,7 @@ def main():
      print("Input: '(1+3)' ... Expected: 4 ... Got: " + str(driver("(1+3)")))
      print("Input: '(4-2)' ...  Expected: 2 ... Got: " + str(driver("(4-2)")))
      print("Input: '4-3' ...  Expected: 1 ... Got: " + str(driver("4-3")))
+     print("Input: '((4-2)+(3*2))' ...  Expected: 8 ... Got: " + str(driver("((4-2)+(3*2))")))
      print("Input: '((1+(3*2))-4)' ... Expected: 3 ... Got: " + str(driver("((1+(3*2))-4)")))
      print("Input: '3' ... Expected: 3 ... Got: " + str(driver("3")))
      print(driver('bill'))
