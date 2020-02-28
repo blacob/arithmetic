@@ -11,7 +11,7 @@ def parse(explst):
     first = explst[0]
     rest = explst[1:]
     if first == '(':
-        left, newlist = parse(rest) 
+        left, newlist = parse(rest)
         operator = newlist[0]
         right, toss = parse(newlist[1:])
         return eval(left, operator, right), toss[1:]
@@ -49,6 +49,7 @@ def driver(line):
                 holder[-1] = holder[-1] + c
         else:
             return "Invalid Input: " + line
+
     try:
         return parse(holder)[0]
     except IndexError:
@@ -66,9 +67,6 @@ def main():
      print("Input: '3' ... Expected: 3 ... Got: " + str(driver("3")))
      print("Input: '(5.6+2.4)' ... Expected: 8 ... Got: " + str(driver("(5.6+2.4)")))
      print(str(driver("(6)")))
-     print(str(driver("4-3")))
-
-
      print(driver('bill'))
      print(driver('(bill-bill)'))
 
