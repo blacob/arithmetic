@@ -1,3 +1,4 @@
+import funcparselib
 import sys
 digits = '0123456789.'
 operators = '+-*'
@@ -7,31 +8,42 @@ parens = '()'
 Parses a list of tokens EXPLST, returning a tuple where the first element is
 it's evaluation.
 """
-def parse(explst):
-    first = explst[0]
-    rest = explst[1:]
-    if first == '(':
-        left, newlist = parse(rest)
-        operator = newlist[0]
-        right, toss = parse(newlist[1:])
-        return eval(left, operator, right), toss[1:]
-    return first, rest
+def parse(tokens):
+    const = lambda x: lambda _: x
+    unarg = lambda f: lambda x: f(*x)
 
-"""
-Takes numerical types L and R and applies function that OPERATOR represents
-"""
-def eval(l, operator, r):
-    left = float(l)
-    right = float(r)
-    if operator == '+':
-        return left + right
-    elif operator == '-':
-        return left - right
-    elif operator == '*':
-        return left * right
-    else:
-        print("ERROR, invalid op: " + operator)
-        exit()
+    makeop = lambda s, f: op(s) >> const(f)
+
+    def make_number(s):
+        try:
+            return int(s)
+        except ValueError:
+            return float(s)
+
+    def eval_expr(z, lst):
+        return reduce(lambda s, (f, x): f(s, x), list, z)
+    eval = unarg(eval_expr)
+
+    number = some(lambda tok: tok[0] in digits)
+    op = lambda s: some(lambda tok: (tok in operators) and tok == s )
+    op_ = lambda s: skip(op(s))
+
+    add = makeop('+', operator.add)
+    sub = makeop('-', operator.sub)
+    mul = makeop('*'. operator.mul)
+
+    add_op = add | sub
+
+    #@with_forward_decls   # idk what this tag is
+    def primary():
+        return number | (op_('(') + expr + op_(')'))
+
+    term = primary + many(mul + primary) >> eval
+    expr = term + many(add_op + term) >> eval
+
+
+    toplevel = maybe(expr) + finish
+    return toplevel.parse(tokens)
 
 """
 Receives a parenthesized arithmetic expression LINE and returns it's evaluation.
