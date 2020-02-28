@@ -1,5 +1,7 @@
-import funcparselib
+from funcparserlib.parser import (some, a, many, skip, finished, maybe, with_forward_decls)
+import operator
 import sys
+from functools import reduce
 digits = '0123456789.'
 operators = '+-*'
 parens = '()'
@@ -9,6 +11,7 @@ Parses a list of tokens EXPLST, returning a tuple where the first element is
 it's evaluation.
 """
 def parse(tokens):
+    print(tokens)
     const = lambda x: lambda _: x
     unarg = lambda f: lambda x: f(*x)
 
@@ -21,20 +24,20 @@ def parse(tokens):
             return float(s)
 
     def eval_expr(z, lst):
-        return reduce(lambda s, (f, x): f(s, x), list, z)
+        return reduce((lambda s, a: a[0](s, a[1])), lst, z)
     eval = unarg(eval_expr)
 
     number = some(lambda tok: tok[0] in digits)
-    op = lambda s: some(lambda tok: (tok in operators) and tok == s )
+    op = lambda s: some(lambda tok: (tok in operators) and (tok == s))
     op_ = lambda s: skip(op(s))
 
     add = makeop('+', operator.add)
     sub = makeop('-', operator.sub)
-    mul = makeop('*'. operator.mul)
+    mul = makeop('*', operator.mul)
 
     add_op = add | sub
 
-    #@with_forward_decls   # idk what this tag is
+    @with_forward_decls
     def primary():
         return number | (op_('(') + expr + op_(')'))
 
@@ -42,7 +45,7 @@ def parse(tokens):
     expr = term + many(add_op + term) >> eval
 
 
-    toplevel = maybe(expr) + finish
+    toplevel = maybe(expr) #+ finished
     return toplevel.parse(tokens)
 
 """
@@ -63,7 +66,7 @@ def driver(line):
             return "Invalid Input: " + line
 
     try:
-        return parse(holder)[0]
+        return parse(holder)
     except IndexError:
         return "Invalid Input: " + line
 
@@ -72,7 +75,7 @@ def main():
      for i in range(1, len(sys.argv)):
          print(driver(sys.argv[i]))
      print("\nExample Tests: ")
-     print("Input: '(521+3)' ... Expected: 524 ... Got: " + str(driver("(521+3)")))
+     print("Input: '(2+3)' ... Expected: 5 ... Got: " + str(driver("(2+3)")))
      print("Input: '(4-2)' ...  Expected: 2 ... Got: " + str(driver("(4-2)")))
      print("Input: '((4-2)+(3*2))' ...  Expected: 8 ... Got: " + str(driver("((4-2)+(3*2))")))
      print("Input: '((1+(3*2))-4)' ... Expected: 3 ... Got: " + str(driver("((1+(3*2))-4)")))
